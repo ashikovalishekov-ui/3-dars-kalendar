@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Calendar 2027</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 14px 90px;display:grid;place-items:center;background:radial-gradient(circle at top,#526477,#17212d 70%);font:16px "Segoe UI",Arial;color:#263746}
+.wrap{width:min(1000px,96vw);perspective:1400px}.book{display:grid;grid-template-columns:1fr 1fr;min-height:590px;position:relative;background:#fdfbf5;border-radius:16px;box-shadow:0 28px 70px #0008;overflow:hidden}
+.book:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:8px;transform:translateX(-50%);background:linear-gradient(90deg,#aa9a85,#fff2d9,#9b8b76);z-index:2}
+.page{padding:clamp(20px,4vw,44px);min-width:0}.left{background:linear-gradient(150deg,#fffdf8,#e9dfce);position:relative;overflow:hidden}.year{font-size:clamp(58px,9vw,100px);font-weight:900;letter-spacing:-5px}.eyebrow{text-transform:uppercase;letter-spacing:3px;color:#8a7964;font-size:12px}.quote{font:italic 23px/1.4 Georgia;color:#746858;max-width:330px;margin-top:28px}.big-art{position:absolute;bottom:15px;left:0;right:0;text-align:center;font-size:clamp(100px,18vw,190px);opacity:.9}
+.right{background:#fffdf8}.heading{display:flex;justify-content:space-between;align-items:end;border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:18px;gap:8px}.heading h1{font:500 clamp(30px,4vw,46px) Georgia;margin:0}.heading small{color:#7d858a;font-size:11px;letter-spacing:1px}.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}.dow{font-size:12px;font-weight:700;color:#7b858c;padding:5px}.dow:nth-child(6),.dow:nth-child(7){color:#d34e43}.date{border:0;background:transparent;border-radius:9px;min-height:39px;font-size:15px;color:#35434e;cursor:pointer}.date.weekend,.date.holiday{color:#c7443b;font-weight:700}.date.today{background:var(--accent);color:white}.date.marked:after{content:" •";color:#2878a8}.date.selected{outline:2px solid #2878a8}.date:hover{background:#eaf1f5}.art{margin-top:20px;min-height:90px;border-radius:13px;background:linear-gradient(120deg,var(--a),var(--b));display:flex;align-items:center;justify-content:space-evenly;font-size:48px}.caption{text-align:center;font:italic 13px Georgia;color:#78828a;margin:10px 0 16px}.notes{border:1px solid #e4ddd2;border-radius:12px;padding:12px;background:#fff}.notes label{font-weight:700;font-size:13px}.notes small{display:block;color:#7d858a;margin:4px 0 8px}.note-row{display:flex;gap:8px}.notes textarea{flex:1;min-width:0;min-height:54px;resize:vertical;border:1px solid #d9d2c8;border-radius:8px;padding:8px;font:13px Arial}.note-row button{border:0;border-radius:8px;background:#34495e;color:white;padding:8px 11px;cursor:pointer}.note-row button:last-child{background:#eae5dc;color:#554c43}.controls{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}.controls button,.controls select{border:1px solid #ffffff55;border-radius:25px;padding:11px 18px;background:linear-gradient(#586d82,#293b4e);color:white;font-weight:700;cursor:pointer;box-shadow:0 5px 15px #0005}.controls button:disabled{opacity:.35;cursor:default}.hint{text-align:center;color:#c5d0da;font-size:12px;margin-top:12px}
+
+.right{position:relative;transform-style:preserve-3d;perspective:1800px}
+.page-flip{position:absolute;z-index:5;inset:0;transform-style:preserve-3d;transform-origin:left center;pointer-events:none}
+.page-flip.turn-next{animation:turnNext 1.7s cubic-bezier(.42,0,.22,1) forwards}
+.page-flip.turn-prev{transform-origin:right center;animation:turnPrev 1.7s cubic-bezier(.42,0,.22,1) forwards}
+.page-flip .face{position:absolute;inset:0;padding:clamp(20px,4vw,44px);background:#fffdf8;backface-visibility:hidden;overflow:hidden}
+.page-flip .face.front{border-radius:0 14px 14px 0;box-shadow:inset 12px 0 25px #0000000b}
+.page-flip .face.back{transform:rotateY(180deg);border-radius:14px 0 0 14px;box-shadow:inset -12px 0 25px #0000000b}
+.page-flip .face:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(90deg,#17212d66,transparent 38%,#fff8 50%,transparent 68%);}
+.page-flip.turn-next .face.front:after,.page-flip.turn-prev .face.front:after{animation:paperShade 1.7s ease-in-out forwards}
+.page-flip .face.back:after{background:linear-gradient(270deg,#17212d55,transparent 42%,#fff7 55%,transparent 72%)}
+.page-flip.turn-next .face.back:after,.page-flip.turn-prev .face.back:after{animation:paperShadeBack 1.7s ease-in-out forwards}
+.page-flip .face .heading{border-bottom:2px solid var(--accent)}
+.page-flip .face .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.page-flip .face .dow{font-size:12px;font-weight:700;color:#7b858c;padding:5px}
+.page-flip .face .date{display:grid;place-items:center;min-height:39px;border-radius:9px;font-size:15px}
+.page-flip .face .art{margin-top:20px;min-height:90px;border-radius:13px;background:linear-gradient(120deg,var(--a),var(--b));display:flex;align-items:center;justify-content:space-evenly;font-size:48px}
+.page-flip .face .caption{text-align:center;font:italic 13px Georgia;color:#78828a;margin:10px 0}
+@keyframes turnNext{0%{transform:rotateY(0) translateZ(0);filter:drop-shadow(0 0 0 #0000)}18%{filter:drop-shadow(8px 8px 9px #0002)}48%{transform:rotateY(-88deg) translateZ(18px);filter:drop-shadow(18px 12px 14px #0005)}82%{filter:drop-shadow(8px 7px 8px #0002)}100%{transform:rotateY(-180deg) translateZ(0);filter:drop-shadow(0 0 0 #0000)}}
+@keyframes turnPrev{0%{transform:rotateY(0) translateZ(0);filter:drop-shadow(0 0 0 #0000)}18%{filter:drop-shadow(-8px 8px 9px #0002)}48%{transform:rotateY(88deg) translateZ(18px);filter:drop-shadow(-18px 12px 14px #0005)}82%{filter:drop-shadow(-8px 7px 8px #0002)}100%{transform:rotateY(180deg) translateZ(0);filter:drop-shadow(0 0 0 #0000)}}
+@keyframes paperShade{0%,100%{opacity:0}35%,58%{opacity:.55}}
+@keyframes paperShadeBack{0%,100%{opacity:0}35%,58%{opacity:.35}}
+@media(max-width:650px){body{padding:12px 8px 80px}.book{display:block;min-height:0}.book:after,.left{display:none}.right{padding:22px 14px}.date{min-height:35px}.art{font-size:38px;min-height:75px}.controls{gap:7px}.controls button,.controls select{padding:10px 12px;font-size:12px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="book">
+<aside class="page left"><div class="year">2027</div><div class="eyebrow">12 месяцев · 365 дней</div><p class="quote" id="quote">Каждый месяц — новая история.</p><div class="big-art" id="bigArt">❄️</div></aside>
+<section class="page right">
+<div class="heading"><h1 id="monthTitle">Январь</h1><small id="monthMeta">2027</small></div>
+<div class="grid" id="calendar"></div>
+<div class="art" id="monthArt"></div><p class="caption" id="monthQuote"></p>
+<section class="notes"><label for="noteText">✎ Заметка на выбранную дату</label><small id="selectedDate">Сначала выберите число в календаре</small><div class="note-row"><textarea id="noteText" placeholder="Планы, встречи, напоминания..."></textarea><button id="saveNote">Сохранить</button><button id="clearNote">Очистить</button></div></section>
+</section></section>
+<nav class="controls"><button id="prev">← Назад</button><select id="monthSelect" aria-label="Выбрать месяц"></select><button id="next">Вперёд →</button></nav>
+<div class="hint">Переключайте месяцы кнопками или стрелками клавиатуры. Заметки хранятся в этом браузере.</div>
+</main>
+<script>
+(function(){
+"use strict";
+const data=[
+["Январь","Морозная тишина, снег и начало новой истории.",["❄️","🏔️","☕"],"#dceaf2","#9bb9cf","❄️"],
+["Февраль","Зимние вечера, тёплый свет и маленькие поводы для любви.",["🌨️","❤️","🧣"],"#e6dce8","#b9c8dc","🏡"],
+["Март","Первые ручьи, нежные цветы и пробуждение природы.",["🌱","🌷","🦋"],"#e3f0d9","#b8d9c0","🌷"],
+["Апрель","Весенний дождь и свежая зелень.",["🌧️","🌿","🌼"],"#d9efdf","#a9d7b6","🌦️"],
+["Май","Цветущие сады, солнце и аромат травы.",["🌸","🌳","☀️"],"#f6e8c9","#b8dcae","🌺"],
+["Июнь","Длинные вечера и начало летних приключений.",["☀️","🍓","🏖️"],"#f8e7b5","#f2c98f","🍓"],
+["Июль","Жаркое солнце, прохладная вода и лето.",["🌞","🌊","🍉"],"#f8d99c","#83c9d5","🌻"],
+["Август","Золотые закаты и спелые плоды.",["🌻","🍑","🌅"],"#f4d4a4","#e8a77f","🌾"],
+["Сентябрь","Шорох листьев и уютное начало осени.",["🍂","📚","🍎"],"#ead6b7","#c7a27d","🍁"],
+["Октябрь","Тёплые краски и дождь за окном.",["🍁","🌧️","🍄"],"#e9c39d","#b87958","🎃"],
+["Ноябрь","Туманное утро и спокойная красота осени.",["🌫️","🍂","🕯️"],"#d4d5d1","#9ca9a8","🌧️"],
+["Декабрь","Огни, снег и ожидание добрых перемен.",["❄️","🎄","✨"],"#d8e4ef","#9eb8d2","🎄"]
+];
+const holidays={"0-1":"Новый год","0-14":"День защитников Родины","2-8":"Международный женский день","2-21":"Навруз","4-9":"День памяти и почестей","8-1":"День независимости","9-1":"День учителей и наставников","11-8":"День Конституции"};
+const $=id=>document.getElementById(id), key="calendar2027_notes";
+let month=0,day=null,notes={};
+try{notes=JSON.parse(localStorage.getItem(key)||"{}")}catch(e){notes={}}
+function saveAll(){try{localStorage.setItem(key,JSON.stringify(notes));return true}catch(e){alert("Не удалось сохранить заметку. Попробуйте открыть файл в Chrome или Edge.");return false}}
+function render(){
+ const m=data[month],grid=$("calendar"),first=(new Date(2027,month,1).getDay()+6)%7,total=new Date(2027,month+1,0).getDate(),now=new Date();
+ $("monthTitle").textContent=m[0];$("monthMeta").textContent="2027 · "+total+" дней";$("quote").textContent=m[1];$("monthQuote").textContent=m[1];$("bigArt").textContent=m[5];$("monthArt").style.setProperty("--a",m[3]);$("monthArt").style.setProperty("--b",m[4]);$("monthArt").innerHTML=m[2].map(x=>"<span>"+x+"</span>").join("");
+ grid.innerHTML="";["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].forEach((w,i)=>{let el=document.createElement("div");el.className="dow";el.textContent=w;grid.appendChild(el)});
+ for(let i=0;i<first;i++){let e=document.createElement("div");grid.appendChild(e)}
+ for(let d=1;d<=total;d++){
+  const k=month+"-"+d,e=document.createElement("button"),dow=(first+d-1)%7;
+  e.type="button";e.className="date"+(dow>4?" weekend":"")+(holidays[k]?" holiday":"")+(now.getFullYear()===2027&&now.getMonth()===month&&now.getDate()===d?" today":"")+(notes[k]?" marked":"");
+  e.textContent=d;e.title=holidays[k]||("Выбрать "+d+" "+m[0]);e.addEventListener("click",()=>selectDay(d));grid.appendChild(e);
+ }
+ $("monthSelect").value=month;$("prev").disabled=month===0;$("next").disabled=month===11;
+ day=null;$("selectedDate").textContent="Сначала выберите число в календаре";$("noteText").value="";
+}
+function selectDay(d){day=d;const k=month+"-"+d;$("selectedDate").textContent=d+" "+data[month][0]+" 2027"+(holidays[k]?" · "+holidays[k]:"");$("noteText").value=notes[k]||"";Array.from(document.querySelectorAll(".date")).forEach(x=>x.classList.toggle("selected",Number(x.textContent)===d))}
+function pageSnapshot(index){
+ const m=data[index],first=(new Date(2027,index,1).getDay()+6)%7,total=new Date(2027,index+1,0).getDate();
+ let cells=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map((w,i)=>`<div class="dow">${w}</div>`).join("");
+ for(let i=0;i<first;i++)cells+='<div></div>';
+ for(let d=1;d<=total;d++){const k=index+"-"+d,dow=(first+d-1)%7;cells+=`<div class="date ${dow>4||holidays[k]?"holiday":""}">${d}</div>`}
+ return `<div class="heading"><h1>${m[0]}</h1><small>2027 · ${total} дней</small></div><div class="grid">${cells}</div><div class="art" style="--a:${m[3]};--b:${m[4]}">${m[2].map(x=>`<span>${x}</span>`).join("")}</div><p class="caption">${m[1]}</p>`;
+}
+function change(n){
+ const target=Math.max(0,Math.min(11,month+n));
+ if(target===month)return;
+ const right=document.querySelector(".right");
+ if(right.querySelector(".page-flip"))return;
+ const oldContent=pageSnapshot(month);
+ month=target;
+ render();
+ const newContent=pageSnapshot(month);
+ const layer=document.createElement("div");
+ layer.className="page-flip";
+ const frontFace=document.createElement("div");frontFace.className="face front";frontFace.innerHTML=oldContent;
+ const backFace=document.createElement("div");backFace.className="face back";backFace.innerHTML=newContent;
+ layer.append(frontFace,backFace);right.appendChild(layer);
+ // Reverse the direction and hinge for a backward page turn.
+ layer.classList.add(n>0?"turn-next":"turn-prev");
+ const cleanup=()=>{layer.remove();layer.removeEventListener("animationend",cleanup)};
+ layer.addEventListener("animationend",cleanup);
+ setTimeout(()=>{if(layer.isConnected)cleanup()},1950);
+}
+$("prev").addEventListener("click",()=>change(-1));$("next").addEventListener("click",()=>change(1));
+$("monthSelect").addEventListener("change",e=>{month=Number(e.target.value);render()});
+data.forEach((m,i)=>{let o=document.createElement("option");o.value=i;o.textContent=m[0]+" 2027";$("monthSelect").appendChild(o)});
+$("saveNote").addEventListener("click",()=>{if(day===null){alert("Сначала выберите дату в календаре.");return}const k=month+"-"+day,v=$("noteText").value.trim();if(v)notes[k]=v;else delete notes[k];if(saveAll()){const d=day;render();selectDay(d)}});
+$("clearNote").addEventListener("click",()=>{if(day===null)return;delete notes[month+"-"+day];if(saveAll()){const d=day;render();selectDay(d)}});
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")change(1);if(e.key==="ArrowLeft")change(-1)});
+render();
+})();
+</script>
+</body></html>
